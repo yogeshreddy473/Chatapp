@@ -13,32 +13,34 @@ dotenv.config();
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173", // Frontend URL
+    credentials: true, // Allow cookies
+  })
+);
 
 const PORT = process.env.PORT || 3001;
 const URI = process.env.MONGODB_URI;
 
+// MongoDB Connection Function
 const connectDB = async () => {
-    try {
-        await mongoose.connect(URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            tls: true, // Ensures MongoDB uses SSL/TLS
-        });
-        console.log("✅ Connected to MongoDB");
-    } catch (error) {
-        console.error("❌ MongoDB Connection Error:", error);
-        process.exit(1); // Exit process with failure
-    }
+  try {
+    await mongoose.connect(URI); // Removed deprecated options
+    console.log("✅ Connected to MongoDB");
+  } catch (error) {
+    console.error("❌ MongoDB Connection Error:", error.message);
+    process.exit(1);
+  }
 };
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB before starting server
+connectDB().then(() => {
+  server.listen(PORT, () => {
+    console.log(`🚀 Server is Running on port ${PORT}`);
+  });
+});
 
 // Routes
 app.use("/api/user", userRoute);
 app.use("/api/message", messageRoute);
-
-server.listen(PORT, () => {
-    console.log(`🚀 Server is Running on port ${PORT}`);
-});
