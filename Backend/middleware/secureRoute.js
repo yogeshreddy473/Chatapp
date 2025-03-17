@@ -1,25 +1,22 @@
 import jwt from "jsonwebtoken";
-import User from "../models/user.model.js";
 
-const secureRoute = async (req, res, next) => {
+const secureRoute = (req, res, next) => {
+  const token = req.cookies.jwt;
+
+  if (!token) {
+    console.log("🚫 No JWT Token Found");
+    return res.status(401).json({ error: "Unauthorized, no token found" });
+  }
+
   try {
-    const token = req.cookies.jwt;
-    if (!token) {
-      return res.status(401).json({ error: "No token, authorization denied" });
-    }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded) {
-      return res.status(401).json({ error: "Invalid Token" });
-    }
-    const user = await User.findById(decoded.userId).select("-password"); // current loggedin user
-    if (!user) {
-      return res.status(401).json({ error: "No user found" });
-    }
-    req.user = user;
+    req.user = decoded;
+    console.log("✅ Token Verified:", decoded);
     next();
   } catch (error) {
-    console.log("Error in secureRoute: ", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("❌ Invalid Token:", error);
+    res.status(403).json({ error: "Invalid or expired token" });
   }
 };
+
 export default secureRoute;
