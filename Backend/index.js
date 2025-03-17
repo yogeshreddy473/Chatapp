@@ -10,7 +10,7 @@ import { app, server } from "./SocketIO/server.js";
 
 dotenv.config();
 
-// middleware
+// Middleware
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors());
@@ -18,17 +18,27 @@ app.use(cors());
 const PORT = process.env.PORT || 3001;
 const URI = process.env.MONGODB_URI;
 
-try {
-    mongoose.connect(URI);
-    console.log("Connected to MongoDB");
-} catch (error) {
-    console.log(error);
-}
+const connectDB = async () => {
+    try {
+        await mongoose.connect(URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            tls: true, // Ensures MongoDB uses SSL/TLS
+        });
+        console.log("✅ Connected to MongoDB");
+    } catch (error) {
+        console.error("❌ MongoDB Connection Error:", error);
+        process.exit(1); // Exit process with failure
+    }
+};
 
-//routes
+// Connect to MongoDB
+connectDB();
+
+// Routes
 app.use("/api/user", userRoute);
 app.use("/api/message", messageRoute);
 
 server.listen(PORT, () => {
-    console.log(`Server is Running on port ${PORT}`);
+    console.log(`🚀 Server is Running on port ${PORT}`);
 });
